@@ -1,0 +1,142 @@
+<style>
+  .items {
+    margin-top: 40rpx;
+  }
+  .item {
+    position: relative;
+    padding: 10px;
+  }
+  .item-cover {
+    width: 100%;
+    box-shadow: 0 2px 2px #ebebeb;
+  }
+  .item-title-text {
+    display: flex;
+  }
+  .item-author-text {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 5%;
+  }
+  .picker {
+    position: fixed;
+    top: 0;
+    height: 30rpx;
+  }
+</style>
+
+<template>
+  <view class="container">
+    <scroll-view class="items">
+      <view wx:for="{{items}}" class="item" wx:key="_id" data-item="{{item}}" @tap="gotoDetail({{index}})">
+        <image class="item-cover" wx:if="{{item.typ || item.type==='福利' || (item.images && item.images.length > 0)}}" src="{{item.type==='福利' ?item.url : item.images[0]}}" mode="widthFix"></image>
+        <view wx:if="{{item.type !== '福利'}}">
+          <text class="item-title-text">{{item.desc}}</text>
+        </view>
+        <view wx:if="{{item.type !== '福利' && item.who}}">
+          <text class="item-author-text">author: {{item.who}}</text>
+        </view>
+      </view>
+    </scroll-view>
+    <picker class="picker" @change="bindPickerChange" value="{{index}}" range="{{categoryArray}}">
+      <view class="picker-text">
+        分类选择：{{currentCategory}}
+      </view>
+    </picker>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import api from '../api/api.js'
+  export default class Index extends wepy.page {
+    config = {
+      navigationBarTitleText: 'gank.io',
+      enablePullDownRefresh: true,
+      backgroundTextStyle: 'dark'
+    }
+    components = {}
+    data = {
+      items: [],
+      pageIndex: 0,
+      currentCategory: api.Category.all,
+      category: api.Category,
+      categoryArray: Object.values(api.Category)
+    }
+    computed = {
+      now() {
+        return +new Date()
+      }
+    }
+    methods = {
+      gotoDetail(index) {
+        let item = this.items[index]
+        wepy.showToast({
+          title: item.url,
+          icon: 'none',
+          duration: 1000
+        })
+      },
+      bindPickerChange: function(e) {
+        this.currentCategory = this.categoryArray[e.detail.value]
+        wepy.startPullDownRefresh()
+      }
+    }
+    events = {}
+    async onLoad() {
+      wepy.startPullDownRefresh()
+    }
+    onReachBottom() {
+      this.fetchData(false)
+    }
+    onPullDownRefresh() {
+      this.fetchData(true)
+    }
+    async fetchData(isRefresh) {
+      try {
+        if (!isRefresh) {
+          this.showloading()
+        }
+        await api.getDataByCategory({
+          query: {
+            category: this.currentCategory,
+            count: 10,
+            page: isRefresh ? 1 : this.pageIndex + 1
+          }
+        }).then((res) => {
+          if (res.data.error === 'false') {
+            throw Error(res.data.error)
+          }
+          let result = res.data.results
+          if (isRefresh) {
+            this.pageIndex = 1
+          } else {
+            this.pageIndex++
+          }
+          if (this.pageIndex === 1) {
+            this.items = result
+          } else {
+            this.items = this.items.concat(result)
+          }
+          this.$apply()
+        }).catch((error) => {
+          console.log(error)
+        })
+      } finally {
+        this.hideLoading()
+        if (isRefresh) {
+          wepy.stopPullDownRefresh()
+        }
+      }
+    }
+    showloading() {
+      wepy.showLoading({
+        title: 'loading',
+        mask: true
+      })
+    }
+    hideLoading() {
+      wepy.hideLoading()
+    }
+  }
+</script>
