@@ -1,0 +1,45 @@
+<style>
+
+</style>
+
+<template>
+  <view class="container">
+    <itemComponent :item.sync="item"></itemComponent>
+  </view>
+</template>
+
+<script>
+  import wepy from 'wepy'
+  import util from '../utils/utils.js'
+  import Item from '../components/item'
+  export default class Index extends wepy.page {
+    config = {
+      navigationBarTitleText: ''
+    }
+    components = {
+      itemComponent: Item
+    }
+    data = {
+      item: {}
+    }
+    events = {}
+    async onLoad(options) {
+      this.item = util.decodeParam(options.item)
+      wepy.setNavigationBarTitle({
+        title: this.item.type
+      })
+      this.$apply()
+    }
+    onShareAppMessage() {
+      return {
+        imageUrl: util.getImageUrl(this.item),
+        success: function(res) {
+          // 转发成功
+        },
+        fail: function(res) {
+          // 转发失败
+        }
+      }
+    }
+  }
+</script>

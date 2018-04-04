@@ -1,0 +1,48 @@
+<style>
+    .item {
+        width: 100%;
+        position: relative;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+    .item-cover {
+        width: 100%;
+        box-shadow: 0 2px 2px #ebebeb;
+    }
+    .item-title-text {
+        display: flex;
+    }
+    .item-author-text {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 5%;
+    }
+</style>
+
+<template>
+    <view class="item" @tap="itemClicked({{item}})">
+        <image class="item-cover" wx:if="{{item.type==='福利' || (item.images && item.images.length > 0)}}" src="{{item.type==='福利' ?item.url : item.images[0]}}" mode="widthFix">
+        </image>
+        <view wx:if="{{item.type !== '福利'}}">
+            <text class="item-title-text">{{item.desc}}</text>
+        </view>
+        <view wx:if="{{item.type !== '福利' && item.who}}">
+            <text class="item-author-text">author: {{item.who}}</text>
+        </view>
+    </view>
+    <view class="divider-horizontal"></view>
+</template>
+
+<script>
+    import wepy from 'wepy'
+    export default class Item extends wepy.component {
+        props = {
+            item: {}
+        }
+        methods = {
+            itemClicked(item) {
+                this.$emit('item-click', item)
+            }
+        }
+    }
+</script>
